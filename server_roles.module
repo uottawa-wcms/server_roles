@@ -3,11 +3,66 @@
 function server_roles_user_login(&$edit, $account) {
   if (module_exists('server_management_connect')) {
     $config = _server_management_connect_config('user_provisioner');
+    $my_roles = array();
+    $email = NULL;
     foreach ($config as $conf) {
-      var_dump($conf);
-      if ($conf->server_roles_username['und'][0]['value'] == $account->name) {
-
+      if ($account->name == $conf->server_role_username['und'][0]['value']) {
+        foreach ($conf->server_role_roles['und'] as $role) {
+          $my_roles[$role['value']] = $role['value'];
+        }
+        if (!empty($conf->server_role_email['und'][0]['value'])) {
+          $email = $conf->server_role_email['und'][0]['value'];
+        }
+      }
+    }
+    $ignore_roles = array('anonymous user', 'authenticated user');
+    $roles = user_roles(TRUE);
+    $reverse_roles = array();
+    foreach ($roles as $rid => $role_name) {
+      $reverse_roles[$role_name] = $rid;
+      if (!in_array($role_name, $ignore_roles)) {
+        server_roles_remove_role($account->uid, $rid);
+      }
+    }
+    foreach ($my_roles as $role_name) {
+      if (!empty($reverse_roles[$role_name])) {
+        server_roles_grant_role($account->uid, $reverse_roles[$role_name]);
+      }
+    }
+    if (!empty($email)) {
+      if ($email != $user->mail) {
+        if (!user_load_by_mail($email)) {
+          $user = user_load($account->uid, TRUE);
+          $user->mail = $email;
+          user_save($user);
+        }
       }
     }
   }
+}
+
+function server_roles_remove_role($user_id, $role_id) {
+  if ($role_id < 3) {
+    return FALSE;
+  }
+  return db_delete('users_roles')
+    ->condition('uid', $user_id)
+    ->condition('rid', $role_id)
+    ->execute();
+}
+
+function server_roles_grant_role($user_id, $role_id) {
+  if ($role_id < 3) {
+    return FALSE;
+  }
+  return db_merge('users_roles')
+    ->fields(array(
+      'uid' => $user_id,
+      'rid' => $role_id,
+    ))
+    ->key(array(
+      'uid' => $user_id,
+      'rid' => $role_id,
+    ))
+    ->execute();
 }
