@@ -1,0 +1,13 @@
+<?php
+
+function server_roles_user_login(&$edit, $account) {
+  if (module_exists('server_management_connect')) {
+    $config = _server_management_connect_config('user_provisioner');
+    foreach ($config as $conf) {
+      var_dump($conf);
+      if ($conf->server_roles_username['und'][0]['value'] == $account->name) {
+
+      }
+    }
+  }
+}

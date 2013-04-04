@@ -1,0 +1,5 @@
+name = Server Management - Roles
+description = "Allows for remote management of roles by user"
+core = 7.x
+
+dependencies[] = server_management

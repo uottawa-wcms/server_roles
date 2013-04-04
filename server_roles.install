@@ -1,0 +1,106 @@
+<?php
+
+function server_roles_install() {
+  foreach (_server_roles_config_types() as $config_type) {
+    server_management_config_type_save($config_type);
+  }
+  foreach (_server_roles_fields() as $field) {
+    if (!field_info_field($field['field_name'])) {
+      field_create_field($field);
+    }
+  }
+  foreach (_server_roles_field_instances() as $instance) {
+    if (!field_info_instance($instance['entity_type'], $instance['field_name'], $instance['bundle'])) {
+      field_create_instance($instance);
+    }
+  }
+}
+
+function server_roles_uninstall() {
+  foreach (_server_roles_field_instances() as $instance) {
+    field_delete_instance($instance);
+  }
+  foreach (_server_roles_fields() as $field) {
+    field_delete_field($field);
+  }
+  foreach (_server_roles_config_types() as $type) {
+    server_management_config_type_delete($type['type']);
+  }
+}
+
+function _server_roles_field_instances() {
+  return array(
+    array(
+      'field_name' => 'server_role_username',
+      'entity_type' => 'server_config',
+      'bundle' => 'user_provisioner',
+      'label' => t('Username'),
+      'description' => t('The username of the user that gets provisioned.'),
+      'widget' => array(
+        'type' => 'text_textfield',
+        'settings' => array(
+          'size' => 60,
+        ),
+      ),
+      'required' => TRUE,
+    ),
+    array(
+      'field_name' => 'server_role_email',
+      'entity_type' => 'server_config',
+      'bundle' => 'user_provisioner',
+      'label' => t('Email Address'),
+      'description' => t('The user will have their email address updated to this value.'),
+      'widget' => array(
+        'type' => 'text_textfield',
+        'settings' => array(
+          'size' => 60,
+        ),
+      ),
+      'required' => FALSE,
+    ),
+    array(
+      'field_name' => 'server_role_roles',
+      'entity_type' => 'server_config',
+      'bundle' => 'user_provisioner',
+      'label' => t('User Role'),
+      'description' => t('The user will be granted roles with these names. Existing roles will be removed.'),
+      'widget' => array(
+        'type' => 'text_textfield',
+        'settings' => array(
+          'size' => 40,
+        ),
+      ),
+      'required' => FALSE,
+    ),
+  );
+}
+
+function _server_roles_fields() {
+  return array(
+    'server_role_username' => array(
+      'field_name' => 'server_role_username',
+      'type' => 'text',
+      'locked' => TRUE,
+    ),
+    'server_role_email' => array(
+      'field_name' => 'server_role_email',
+      'type' => 'text',
+      'locked' => TRUE,
+    ),
+    'server_role_roles' => array(
+      'field_name' => 'server_role_roles',
+      'type' => 'text',
+      'locked' => TRUE,
+      'cardinality' => -1,
+    ),
+  );
+}
+
+function _server_roles_config_types() {
+  return array(
+    'user_provisioner' => array(
+      'label' => 'User Provisioner',
+      'type' => 'user_provisioner',
+    ),
+  );
+}
